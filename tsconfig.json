@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "lib": ["ES2022", "DOM"],
+    "strict": false,
+    "moduleResolution": "bundler",
+    "skipLibCheck": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "allowImportingTsExtensions": true,
+    "noImplicitAny": false,
+    "jsx": "react-jsx",
+    "typeRoots": ["./src/types", "./node_modules/@types"],
+    
+  },
+  "include": ["src/**/*", "src/types/**/*"],
+  "exclude": ["build", "dist"]
+}

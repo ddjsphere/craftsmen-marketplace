@@ -1,49 +1,29 @@
 import { projectId, publicAnonKey } from './supabase/info';
-import { createClient } from '@supabase/supabase-js@2';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const BASE_URL = `https://${projectId}.supabase.co/functions/v1/make-server-4d7cb5f9`;
+const hostIsLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+export const BASE_URL = hostIsLocal
+  ? 'http://localhost:8000/make-server-4d7cb5f9'
+  : `https://${projectId}.supabase.co/functions/v1/make-server-4d7cb5f9`;
 
-// Create Supabase client for auth
-export const supabase = createClient(
+// Supabase client for auth + database
+export const supabase: SupabaseClient = createClient(
   `https://${projectId}.supabase.co`,
   publicAnonKey
 );
 
-// Get access token from Supabase session
-async function getAccessToken() {
-  const { data: { session } } = await supabase.auth.getSession();
-  return session?.access_token || publicAnonKey;
-}
-
-async function fetchApi(endpoint: string, options: RequestInit = {}) {
-  const token = await getAccessToken();
-  
-  const response = await fetch(`${BASE_URL}${endpoint}`, {
-    ...options,
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
-
-  const data = await response.json();
-  
-  if (!response.ok) {
-    console.error(`API error on ${endpoint}:`, data);
-    throw new Error(data.error || 'API request failed');
-  }
-
-  return data;
-}
-
-// ============= AUTH =============
+// ========== AUTH ==========
 
 export async function signUp(email: string, password: string, name: string, userType: 'buyer' | 'artisan' = 'buyer') {
-  return fetchApi('/auth/signup', {
-    method: 'POST',
-    body: JSON.stringify({ email, password, name, userType }),
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: { name, userType }
+    }
   });
+  if (error) throw error;
+  return data;
 }
 
 export async function signIn(email: string, password: string) {
@@ -52,21 +32,13 @@ export async function signIn(email: string, password: string) {
   return data;
 }
 
-// Sign in with OAuth provider (google, facebook, etc.)
 export async function signInWithProvider(provider: string) {
-  try {
-    // redirectTo ensures users come back to the app after provider auth
-    const result = await supabase.auth.signInWithOAuth({
-      provider: provider as any,
-      options: { redirectTo: typeof window !== 'undefined' ? window.location.origin : undefined },
-    });
-
-    // Supabase usually redirects for OAuth flows; return the result for completeness
-    return result;
-  } catch (error) {
-    console.error('OAuth sign-in error:', error);
-    throw error;
-  }
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: provider as any,
+    options: { redirectTo: typeof window !== 'undefined' ? window.location.origin : undefined }
+  });
+  if (error) throw error;
+  return data;
 }
 
 export async function signOut() {
@@ -75,183 +47,230 @@ export async function signOut() {
 }
 
 export async function getCurrentUser() {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return null;
-  
-  const response = await fetchApi('/auth/profile');
-  return response.user;
+  const { data: { user } } = await supabase.auth.getUser();
+  return user;
 }
 
 export async function updateProfile(profileData: any) {
-  return fetchApi('/auth/profile', {
-    method: 'PUT',
-    body: JSON.stringify(profileData),
+  const user = await getCurrentUser();
+  if (!user) throw new Error('Not authenticated');
+
+  const { error } = await supabase.auth.updateUser({
+    data: profileData
   });
+  if (error) throw error;
+  return profileData;
 }
 
-// ============= ARTISANS =============
+// ========== ARTISANS ==========
 
 export async function getArtisans() {
-  return fetchApi('/artisans');
+  const { data, error } = await supabase.from('artisans').select('*');
+  if (error) throw error;
+  return data;
 }
 
 export async function getArtisan(id: string) {
-  return fetchApi(`/artisans/${id}`);
+  const { data, error } = await supabase.from('artisans').select('*').eq('id', id).single();
+  if (error) throw error;
+  return data;
 }
 
 export async function createArtisan(artisanData: any) {
-  return fetchApi('/artisans', {
-    method: 'POST',
-    body: JSON.stringify(artisanData),
-  });
+  const user = await getCurrentUser();
+  if (!user) throw new Error('Not authenticated');
+
+  const { data, error } = await supabase.from('artisans').insert([{ ...artisanData, userId: user.id }]).select();
+  if (error) throw error;
+  return data[0];
 }
 
 export async function updateArtisan(id: string, artisanData: any) {
-  return fetchApi(`/artisans/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(artisanData),
-  });
+  const user = await getCurrentUser();
+  if (!user) throw new Error('Not authenticated');
+
+  const { data, error } = await supabase.from('artisans')
+    .update(artisanData)
+    .eq('id', id)
+    .eq('userId', user.id)
+    .select();
+  if (error) throw error;
+  return data[0];
 }
 
-// ============= ARTWORKS =============
+// ========== ARTWORKS ==========
 
 export async function getArtworks(category?: string, artisanId?: string) {
-  const params = new URLSearchParams();
-  if (category && category !== 'all') params.append('category', category);
-  if (artisanId) params.append('artisanId', artisanId);
-  const query = params.toString() ? `?${params.toString()}` : '';
-  return fetchApi(`/artworks${query}`);
+  let query = supabase.from('artworks').select('*');
+
+  if (category && category !== 'all') query = query.eq('category', category);
+  if (artisanId) query = query.eq('artisanId', artisanId);
+
+  const { data, error } = await query;
+  if (error) throw error;
+  return data;
 }
 
 export async function getArtwork(id: string) {
-  return fetchApi(`/artworks/${id}`);
+  const { data, error } = await supabase.from('artworks').select('*').eq('id', id).single();
+  if (error) throw error;
+  return data;
 }
 
 export async function createArtwork(artworkData: any) {
-  return fetchApi('/artworks', {
-    method: 'POST',
-    body: JSON.stringify(artworkData),
-  });
+  const user = await getCurrentUser();
+  if (!user) throw new Error('Not authenticated');
+
+  const { data, error } = await supabase.from('artworks').insert([{ ...artworkData, artisanUserId: user.id }]).select();
+  if (error) throw error;
+  return data[0];
 }
 
 export async function updateArtwork(id: string, artworkData: any) {
-  return fetchApi(`/artworks/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(artworkData),
-  });
+  const user = await getCurrentUser();
+  if (!user) throw new Error('Not authenticated');
+
+  const { data, error } = await supabase.from('artworks')
+    .update(artworkData)
+    .eq('id', id)
+    .eq('artisanUserId', user.id)
+    .select();
+  if (error) throw error;
+  return data[0];
 }
 
 export async function deleteArtwork(id: string) {
-  return fetchApi(`/artworks/${id}`, {
-    method: 'DELETE',
-  });
+  const user = await getCurrentUser();
+  if (!user) throw new Error('Not authenticated');
+
+  const { error } = await supabase.from('artworks').delete().eq('id', id).eq('artisanUserId', user.id);
+  if (error) throw error;
+  return { success: true };
 }
 
-// ============= FAVORITES =============
+// ========== FAVORITES ==========
 
 export async function getFavorites() {
-  return fetchApi('/favorites');
+  const user = await getCurrentUser();
+  if (!user) throw new Error('Not authenticated');
+
+  const { data, error } = await supabase.from('favorites').select('*').eq('userId', user.id);
+  if (error) throw error;
+  return data;
 }
 
 export async function addToFavorites(artworkId: string) {
-  return fetchApi(`/favorites/${artworkId}`, {
-    method: 'POST',
-  });
+  const user = await getCurrentUser();
+  if (!user) throw new Error('Not authenticated');
+
+  const { data, error } = await supabase.from('favorites').upsert({ userId: user.id, artworkId }).select();
+  if (error) throw error;
+  return data;
 }
 
 export async function removeFromFavorites(artworkId: string) {
-  return fetchApi(`/favorites/${artworkId}`, {
-    method: 'DELETE',
-  });
+  const user = await getCurrentUser();
+  if (!user) throw new Error('Not authenticated');
+
+  const { error } = await supabase.from('favorites').delete()
+    .eq('userId', user.id)
+    .eq('artworkId', artworkId);
+  if (error) throw error;
+  return { success: true };
 }
 
-// ============= CART =============
+// ========== CART ==========
 
 export async function getCart(sessionId: string) {
-  const token = await getAccessToken();
-  const response = await fetch(`${BASE_URL}/cart/${sessionId}`, {
-    headers: {
-      'Authorization': `Bearer ${token}`,
-    },
-  });
-  return response.json();
+  const { data, error } = await supabase.from('cart').select('*').eq('sessionId', sessionId);
+  if (error) throw error;
+  return data;
 }
 
 export async function addToCart(sessionId: string, artworkId: string, quantity: number = 1) {
-  const token = await getAccessToken();
-  const response = await fetch(`${BASE_URL}/cart/${sessionId}/add`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ artworkId, quantity }),
-  });
-  return response.json();
+  const { data, error } = await supabase.from('cart').upsert({ sessionId, artworkId, quantity }).select();
+  if (error) throw error;
+  return data;
 }
 
 export async function removeFromCart(sessionId: string, artworkId: string) {
-  const token = await getAccessToken();
-  const response = await fetch(`${BASE_URL}/cart/${sessionId}/remove/${artworkId}`, {
-    method: 'DELETE',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-    },
-  });
-  return response.json();
+  const { error } = await supabase.from('cart').delete().eq('sessionId', sessionId).eq('artworkId', artworkId);
+  if (error) throw error;
+  return { success: true };
 }
 
 export async function clearCart(sessionId: string) {
-  const token = await getAccessToken();
-  const response = await fetch(`${BASE_URL}/cart/${sessionId}`, {
-    method: 'DELETE',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-    },
-  });
-  return response.json();
+  const { error } = await supabase.from('cart').delete().eq('sessionId', sessionId);
+  if (error) throw error;
+  return { success: true };
 }
 
-// ============= ORDERS =============
+// ========== ORDERS & PAYMENT ==========
 
 export async function createOrder(orderData: any) {
-  return fetchApi('/orders', {
-    method: 'POST',
-    body: JSON.stringify(orderData),
-  });
+  const user = await getCurrentUser();
+  if (!user) throw new Error('Not authenticated');
+
+  const { data, error } = await supabase.from('orders').insert([{ ...orderData, userId: user.id, status: 'pending' }]).select();
+  if (error) throw error;
+  return data[0];
 }
 
 export async function getOrders() {
-  return fetchApi('/orders');
+  const user = await getCurrentUser();
+  if (!user) throw new Error('Not authenticated');
+
+  const { data, error } = await supabase.from('orders').select('*').eq('userId', user.id);
+  if (error) throw error;
+  return data;
 }
 
 export async function getArtisanOrders() {
-  return fetchApi('/artisan/orders');
-}
+  const user = await getCurrentUser();
+  if (!user) throw new Error('Not authenticated');
 
-// ============= PAYMENT =============
+  const { data, error } = await supabase.from('orders').select('*');
+  if (error) throw error;
+  return data.filter((order: any) => order.items?.some((item: any) => item.artwork?.artisanUserId === user.id));
+}
 
 export async function processPayment(orderId: string, paymentMethod: string, amount: number) {
-  return fetchApi('/payment/process', {
-    method: 'POST',
-    body: JSON.stringify({ orderId, paymentMethod, amount }),
-  });
+  const user = await getCurrentUser();
+  if (!user) throw new Error('Not authenticated');
+
+  const { data, error } = await supabase.from('payments').insert([{
+    orderId,
+    userId: user.id,
+    amount,
+    paymentMethod,
+    status: 'completed'
+  }]).select();
+
+  if (error) throw error;
+
+  // Update order status
+  await supabase.from('orders').update({ status: 'paid' }).eq('id', orderId);
+  return data[0];
 }
 
-// ============= INITIALIZATION =============
+// ========== SUBSCRIBE / NEWSLETTER ==========
 
+export async function subscribe(email: string) {
+  const { data, error } = await supabase.from('subscribers').upsert({ email }).select();
+  if (error) throw error;
+  return data;
+}
+
+// Initialize sample data by calling the serverless function (no-op if not available)
 export async function initializeData() {
-  const token = await getAccessToken();
-  const response = await fetch(`${BASE_URL}/initialize`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-    },
-  });
-  return response.json();
+  try {
+    await fetch(`${BASE_URL}/initialize`, { method: 'POST' });
+  } catch (err) {
+    // ignore — initialization is optional locally
+  }
 }
 
-// ============= SESSION MANAGEMENT =============
+// ========== SESSION ID ==========
 
 export function getSessionId(): string {
   let sessionId = localStorage.getItem('sessionId');

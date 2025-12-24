@@ -19,13 +19,13 @@ export function Hero() {
               Connect directly with talented African artisans and bring home unique, handcrafted pieces that tell a story.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <button className="px-8 py-4 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition flex items-center justify-center gap-2">
+              <a href="#gallery" className="px-8 py-4 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition flex items-center justify-center gap-2">
                 Explore Artwork
                 <ArrowRight size={20} />
-              </button>
-              <button className="px-8 py-4 border-2 border-orange-600 text-orange-600 rounded-lg hover:bg-orange-50 transition">
+              </a>
+              <a href="#artisans" className="px-8 py-4 border-2 border-orange-600 text-orange-600 rounded-lg hover:bg-orange-50 transition">
                 Meet Artisans
-              </button>
+              </a>
             </div>
             <div className="flex gap-8 pt-8">
               <div>

@@ -1,7 +1,7 @@
 import { Heart, ShoppingCart } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { ArtworkModal } from './ArtworkModal';
-import { getArtworks, addToCart, getCart, getSessionId } from '../utils/api';
+import { getArtworks, addToCart, getCart, getSessionId, addToFavorites, removeFromFavorites, getFavorites } from '../utils/api';
 
 const categories = [
   { id: 'all', name: 'All' },
@@ -22,19 +22,35 @@ interface ArtworkGalleryProps {
 export function ArtworkGallery({ selectedCategory, onCategoryChange, onCartUpdate }: ArtworkGalleryProps) {
   const [selectedArtwork, setSelectedArtwork] = useState<any | null>(null);
   const [artworks, setArtworks] = useState<any[]>([]);
+  const [favoritesSet, setFavoritesSet] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadArtworks();
     loadCart();
+    loadFavorites();
   }, [selectedCategory]);
+
+  const loadFavorites = async () => {
+    try {
+      const response = await getFavorites();
+      if (response && typeof response === 'object' && 'success' in response && response.success) {
+        const favs = (response as any).favorites?.items || [];
+        const set: Record<string, boolean> = {};
+        favs.forEach((f: any) => { set[String(f.artworkId)] = true; });
+        setFavoritesSet(set);
+      }
+    } catch (err) {
+      // ignore if not authenticated
+    }
+  };
 
   const loadArtworks = async () => {
     try {
       setLoading(true);
       const response = await getArtworks(selectedCategory);
-      if (response.success) {
-        setArtworks(response.artworks);
+      if (response && typeof response === 'object' && 'success' in response && response.success) {
+        setArtworks((response as any).artworks);
       }
     } catch (error) {
       console.error('Error loading artworks:', error);
@@ -47,8 +63,8 @@ export function ArtworkGallery({ selectedCategory, onCategoryChange, onCartUpdat
     try {
       const sessionId = getSessionId();
       const response = await getCart(sessionId);
-      if (response.success && response.cart) {
-        onCartUpdate(response.cart.items?.length || 0);
+      if (response && typeof response === 'object' && !Array.isArray(response) && 'success' in response && (response as any).success && 'cart' in response) {
+        onCartUpdate((response as any).cart.items?.length || 0);
       }
     } catch (error) {
       console.error('Error loading cart:', error);
@@ -60,8 +76,8 @@ export function ArtworkGallery({ selectedCategory, onCategoryChange, onCartUpdat
     try {
       const sessionId = getSessionId();
       const response = await addToCart(sessionId, artworkId);
-      if (response.success) {
-        onCartUpdate(response.cart.items?.length || 0);
+      if (response && typeof response === 'object' && !Array.isArray(response) && 'success' in response && (response as any).success) {
+        onCartUpdate((response as any).cart.items?.length || 0);
         console.log('Added to cart successfully');
       }
     } catch (error) {
@@ -116,13 +132,25 @@ export function ArtworkGallery({ selectedCategory, onCategoryChange, onCartUpdat
                     alt={artwork.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                   />
-                  <button 
+                  <button
                     className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-md hover:bg-orange-50 transition"
-                    onClick={(e) => {
+                    onClick={async (e) => {
                       e.stopPropagation();
+                      try {
+                        const id = String(artwork.id);
+                        if (favoritesSet[id]) {
+                          await removeFromFavorites(id);
+                          setFavoritesSet((s) => ({ ...s, [id]: false }));
+                        } else {
+                          await addToFavorites(id);
+                          setFavoritesSet((s) => ({ ...s, [id]: true }));
+                        }
+                      } catch (error) {
+                        console.error('Favorite toggle failed', error);
+                      }
                     }}
                   >
-                    <Heart size={20} className="text-gray-600" />
+                    <Heart size={20} className={favoritesSet[String(artwork.id)] ? 'text-red-500' : 'text-gray-600'} />
                   </button>
                 </div>
                 <div className="p-6">

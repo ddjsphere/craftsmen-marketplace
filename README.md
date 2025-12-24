@@ -1,3 +1,14 @@
+## Backend (Supabase functions) — local run
+3. Make the run script executable and start the server:
+The function server reads `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` from the environment.
+Dev mode (no Supabase keys)
+---------------------------------
+If you don't want to provide Supabase keys for local development, the server now supports a dev-mode fallback. When `SUPABASE_SERVICE_ROLE_KEY` is not present in the environment, the server will:
+
+- Use an in-memory key/value store instead of the database (data is ephemeral and lost on restart).
+- Treat requests that include any `Authorization` header as authenticated and return a fake dev user (id: `dev-user`).
+
+This makes it easy to run end-to-end locally without exposing or configuring real Supabase credentials.
 # Craftsmen Marketplace (Copy)
 
 ## Running the code

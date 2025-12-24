@@ -1,5 +1,5 @@
 import { Search, ShoppingBag, Menu, User, LogOut, LayoutDashboard } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { signOut } from '../utils/api';
 
 interface NavigationProps {
@@ -21,6 +21,77 @@ export function Navigation({
 }: NavigationProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [currentHash, setCurrentHash] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.location.hash || (window.location.pathname === '/' ? '/' : '');
+    }
+    return '/';
+  });
+
+  useEffect(() => {
+    const onHashChange = () => {
+      if (typeof window !== 'undefined') {
+        setCurrentHash(window.location.hash || (window.location.pathname === '/' ? '/' : ''));
+      }
+    };
+
+    window.addEventListener('hashchange', onHashChange);
+    window.addEventListener('popstate', onHashChange);
+    return () => {
+      window.removeEventListener('hashchange', onHashChange);
+      window.removeEventListener('popstate', onHashChange);
+    };
+  }, []);
+
+  const isActive = (href: string) => {
+    if (href === '/') {
+      return currentHash === '/';
+    }
+    return currentHash === href;
+  };
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const sectionIds = ['artisans', 'gallery', 'about', 'contact'];
+    const observedEls: Element[] = [];
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && entry.target.id) {
+            setCurrentHash(`#${entry.target.id}`);
+          }
+        });
+      },
+      {
+        root: null,
+        rootMargin: '0px 0px -50% 0px',
+        threshold: 0,
+      }
+    );
+
+    sectionIds.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) {
+        observedEls.push(el);
+        observer.observe(el);
+      }
+    });
+
+    const onScrollTop = () => {
+      if (window.scrollY < 120) {
+        setCurrentHash('/');
+      }
+    };
+
+    window.addEventListener('scroll', onScrollTop, { passive: true });
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('scroll', onScrollTop);
+    };
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -43,11 +114,31 @@ export function Navigation({
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            <a href="#" className="text-gray-700 hover:text-orange-600 transition">Home</a>
-            <a href="#artisans" className="text-gray-700 hover:text-orange-600 transition">Artisans</a>
-            <a href="#gallery" className="text-gray-700 hover:text-orange-600 transition">Gallery</a>
-            <a href="#about" className="text-gray-700 hover:text-orange-600 transition">About</a>
-            <a href="#contact" className="text-gray-700 hover:text-orange-600 transition">Contact</a>
+            <a
+              href="/"
+              className={`text-gray-700 hover:text-orange-600 transition pb-1 border-b-2 ${isActive('/') ? 'border-orange-600' : 'border-transparent'}`}>
+              Home
+            </a>
+            <a
+              href="#artisans"
+              className={`text-gray-700 hover:text-orange-600 transition pb-1 border-b-2 ${isActive('#artisans') ? 'border-orange-600' : 'border-transparent'}`}>
+              Artisans
+            </a>
+            <a
+              href="#gallery"
+              className={`text-gray-700 hover:text-orange-600 transition pb-1 border-b-2 ${isActive('#gallery') ? 'border-orange-600' : 'border-transparent'}`}>
+              Gallery
+            </a>
+            <a
+              href="#about"
+              className={`text-gray-700 hover:text-orange-600 transition pb-1 border-b-2 ${isActive('#about') ? 'border-orange-600' : 'border-transparent'}`}>
+              About
+            </a>
+            <a
+              href="#contact"
+              className={`text-gray-700 hover:text-orange-600 transition pb-1 border-b-2 ${isActive('#contact') ? 'border-orange-600' : 'border-transparent'}`}>
+              Contact
+            </a>
           </div>
 
           {/* Right Side Icons */}
@@ -126,11 +217,31 @@ export function Navigation({
         {/* Mobile Menu */}
         {isMenuOpen && (
           <div className="md:hidden py-4 space-y-2">
-            <a href="#" className="block py-2 text-gray-700 hover:text-orange-600 transition">Home</a>
-            <a href="#artisans" className="block py-2 text-gray-700 hover:text-orange-600 transition">Artisans</a>
-            <a href="#gallery" className="block py-2 text-gray-700 hover:text-orange-600 transition">Gallery</a>
-            <a href="#about" className="block py-2 text-gray-700 hover:text-orange-600 transition">About</a>
-            <a href="#contact" className="block py-2 text-gray-700 hover:text-orange-600 transition">Contact</a>
+            <a
+              href="/"
+              className={`block py-2 text-gray-700 hover:text-orange-600 transition pb-1 border-b-2 ${isActive('/') ? 'border-orange-600' : 'border-transparent'}`}>
+              Home
+            </a>
+            <a
+              href="#artisans"
+              className={`block py-2 text-gray-700 hover:text-orange-600 transition pb-1 border-b-2 ${isActive('#artisans') ? 'border-orange-600' : 'border-transparent'}`}>
+              Artisans
+            </a>
+            <a
+              href="#gallery"
+              className={`block py-2 text-gray-700 hover:text-orange-600 transition pb-1 border-b-2 ${isActive('#gallery') ? 'border-orange-600' : 'border-transparent'}`}>
+              Gallery
+            </a>
+            <a
+              href="#about"
+              className={`block py-2 text-gray-700 hover:text-orange-600 transition pb-1 border-b-2 ${isActive('#about') ? 'border-orange-600' : 'border-transparent'}`}>
+              About
+            </a>
+            <a
+              href="#contact"
+              className={`block py-2 text-gray-700 hover:text-orange-600 transition pb-1 border-b-2 ${isActive('#contact') ? 'border-orange-600' : 'border-transparent'}`}>
+              Contact
+            </a>
             {!currentUser && (
               <button
                 onClick={onLoginClick}

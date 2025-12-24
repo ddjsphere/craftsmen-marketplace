@@ -1,6 +1,45 @@
 import { Facebook, Instagram, Twitter, Mail } from 'lucide-react';
+import { useState } from 'react';
+import { subscribe } from '../utils/api';
 
 export function Footer() {
+  // inline Newsletter component to keep file small
+  function Newsletter() {
+    const [email, setEmail] = useState('');
+    const [status, setStatus] = useState<'idle'|'loading'|'success'|'error'>('idle');
+
+    const handleSubscribe = async () => {
+      if (!email) return;
+      setStatus('loading');
+      try {
+        const res = await subscribe(email);
+        if (res && typeof res === 'object' && 'success' in res && res.success) setStatus('success');
+        else setStatus('error');
+      } catch (err) {
+        console.error(err);
+        setStatus('error');
+      }
+    };
+
+    return (
+      <div>
+        <div className="flex gap-2 mb-4">
+          <input
+            type="email"
+            placeholder="Your email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="flex-1 px-4 py-2 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-orange-500"
+          />
+          <button onClick={handleSubscribe} className="p-2 bg-orange-600 rounded-lg hover:bg-orange-700 transition">
+            <Mail size={20} />
+          </button>
+        </div>
+        {status === 'success' && <p className="text-sm text-green-400">Subscribed — thank you!</p>}
+        {status === 'error' && <p className="text-sm text-red-400">Subscription failed.</p>}
+      </div>
+    );
+  }
   return (
     <footer className="bg-gray-900 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -39,24 +78,15 @@ export function Footer() {
           <div>
             <h4 className="text-lg mb-4">Stay Connected</h4>
             <p className="text-gray-400 mb-4">Subscribe to our newsletter</p>
-            <div className="flex gap-2 mb-4">
-              <input 
-                type="email" 
-                placeholder="Your email"
-                className="flex-1 px-4 py-2 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-orange-500"
-              />
-              <button className="p-2 bg-orange-600 rounded-lg hover:bg-orange-700 transition">
-                <Mail size={20} />
-              </button>
-            </div>
+            <Newsletter />
             <div className="flex gap-3">
-              <a href="#" className="p-2 bg-gray-800 rounded-full hover:bg-orange-600 transition">
+                <a href="#" onClick={(e) => e.preventDefault()} className="p-2 bg-gray-800 rounded-full hover:bg-orange-600 transition">
                 <Facebook size={18} />
               </a>
-              <a href="#" className="p-2 bg-gray-800 rounded-full hover:bg-orange-600 transition">
+                <a href="#" onClick={(e) => e.preventDefault()} className="p-2 bg-gray-800 rounded-full hover:bg-orange-600 transition">
                 <Instagram size={18} />
               </a>
-              <a href="#" className="p-2 bg-gray-800 rounded-full hover:bg-orange-600 transition">
+                <a href="#" onClick={(e) => e.preventDefault()} className="p-2 bg-gray-800 rounded-full hover:bg-orange-600 transition">
                 <Twitter size={18} />
               </a>
             </div>

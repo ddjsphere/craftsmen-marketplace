@@ -1,4 +1,5 @@
 import { X, Heart, ShoppingCart, MapPin, User } from 'lucide-react';
+import { addToFavorites } from '../utils/api';
 
 interface ArtworkModalProps {
   artwork: {
@@ -65,7 +66,18 @@ export function ArtworkModal({ artwork, onClose, onAddToCart }: ArtworkModalProp
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-3xl text-orange-600">${artwork.price}</span>
-                <button className="p-3 border-2 border-gray-200 rounded-lg hover:border-orange-600 hover:bg-orange-50 transition">
+                <button
+                  className="p-3 border-2 border-gray-200 rounded-lg hover:border-orange-600 hover:bg-orange-50 transition"
+                  onClick={async () => {
+                    try {
+                      const id = String(artwork.id);
+                      // toggle favorite locally via fetch to API
+                      await addToFavorites(id);
+                    } catch (err) {
+                      console.error('Error favoriting artwork from modal', err);
+                    }
+                  }}
+                >
                   <Heart size={24} className="text-gray-600" />
                 </button>
               </div>
@@ -78,7 +90,12 @@ export function ArtworkModal({ artwork, onClose, onAddToCart }: ArtworkModalProp
                 Add to Cart
               </button>
 
-              <button className="w-full py-4 border-2 border-orange-600 text-orange-600 rounded-lg hover:bg-orange-50 transition">
+              <button className="w-full py-4 border-2 border-orange-600 text-orange-600 rounded-lg hover:bg-orange-50 transition" onClick={() => {
+                // open mailto as a simple contact action
+                const subject = encodeURIComponent(`Inquiry about ${artwork.title}`);
+                const body = encodeURIComponent(`Hi ${artwork.artisan},%0D%0A%0D%0AI am interested in your artwork titled \"${artwork.title}\". Please let me know more details.%0D%0A%0D%0ABest regards,`);
+                window.location.href = `mailto:?subject=${subject}&body=${body}`;
+              }}>
                 Contact Artisan
               </button>
             </div>
