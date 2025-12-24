@@ -52,6 +52,23 @@ export async function signIn(email: string, password: string) {
   return data;
 }
 
+// Sign in with OAuth provider (google, facebook, etc.)
+export async function signInWithProvider(provider: string) {
+  try {
+    // redirectTo ensures users come back to the app after provider auth
+    const result = await supabase.auth.signInWithOAuth({
+      provider: provider as any,
+      options: { redirectTo: typeof window !== 'undefined' ? window.location.origin : undefined },
+    });
+
+    // Supabase usually redirects for OAuth flows; return the result for completeness
+    return result;
+  } catch (error) {
+    console.error('OAuth sign-in error:', error);
+    throw error;
+  }
+}
+
 export async function signOut() {
   const { error } = await supabase.auth.signOut();
   if (error) throw error;
