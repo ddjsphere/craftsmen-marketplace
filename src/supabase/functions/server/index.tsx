@@ -1,21 +1,24 @@
 import { Hono } from 'npm:hono';
 import { cors } from 'npm:hono/cors';
 import { logger } from 'npm:hono/logger';
-import { createClient } from 'npm:@supabase/supabase-js@2';
+import { createClient } from 'npm:@supabase/supabase-js';
 
 const app = new Hono();
 
 app.use('*', cors());
 app.use('*', logger(console.log));
 
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
   throw new Error('SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY not set');
 }
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 const DEV_MODE = !SUPABASE_SERVICE_ROLE_KEY;
 
@@ -349,4 +352,10 @@ app.post('/make-server-4d7cb5f9/initialize', async (c: any) => {
 
 // ================= START SERVER =================
 
-Deno.serve(app.fetch);
+const PORT = 8000;
+
+Deno.serve({ port: PORT, handler: app.fetch });
+
+console.log(`Server running on http://localhost:${PORT}`);
+
+
