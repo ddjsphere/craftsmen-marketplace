@@ -14,7 +14,13 @@ export const supabase: SupabaseClient = createClient(
 
 // ========== AUTH ==========
 
-export async function signUp(email: string, password: string, name: string, userType: 'buyer' | 'artisan' = 'buyer') {
+// Basic signup (kept for legacy/simple use)
+export async function signUp(
+  email: string,
+  password: string,
+  name: string,
+  userType: 'buyer' | 'artisan' = 'buyer'
+) {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -26,12 +32,57 @@ export async function signUp(email: string, password: string, name: string, user
   return data;
 }
 
+// Full signup: creates auth user + profile + artisan + optional activity log
+export async function completeSignUp(
+  email: string,
+  password: string,
+  name: string,
+  userType: 'buyer' | 'artisan' = 'buyer'
+) {
+  // 1️⃣ Create user in auth.users
+  const { data: authData, error: authError } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: { name, userType }
+    }
+  });
+
+  if (authError) throw authError;
+  const userId = authData.user?.id;
+  if (!userId) throw new Error('User ID not returned from Supabase Auth');
+
+  // 2️⃣ Insert profile row
+  const { error: profileError } = await supabase
+    .from('profiles')
+    .insert([{ id: userId, full_name: name, role: userType }]);
+  if (profileError) throw profileError;
+
+  // 3️⃣ Insert artisan row if user is an artisan
+  if (userType === 'artisan') {
+    const { error: artisanError } = await supabase
+      .from('artisans')
+      .insert([{ id: userId, bio: '', availability_status: 'available' }]);
+    if (artisanError) throw artisanError;
+  }
+
+  // 4️⃣ Optional: log signup in user_activity
+  const { error: activityError } = await supabase
+    .from('user_activity')
+    .insert([{ profile_id: userId, action: 'signup' }]);
+  if (activityError) console.warn('Activity log failed:', activityError.message);
+
+  return authData.user;
+}
+
+// Sign in with email/password
 export async function signIn(email: string, password: string) {
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) throw error;
   return data;
 }
 
+// Sign in with OAuth provider
 export async function signInWithProvider(provider: string) {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: provider as any,
@@ -41,26 +92,28 @@ export async function signInWithProvider(provider: string) {
   return data;
 }
 
+// Sign out
 export async function signOut() {
   const { error } = await supabase.auth.signOut();
   if (error) throw error;
 }
 
+// Get current logged-in user
 export async function getCurrentUser() {
   const { data: { user } } = await supabase.auth.getUser();
   return user;
 }
 
+// Update profile (auth metadata)
 export async function updateProfile(profileData: any) {
   const user = await getCurrentUser();
   if (!user) throw new Error('Not authenticated');
 
-  const { error } = await supabase.auth.updateUser({
-    data: profileData
-  });
+  const { error } = await supabase.auth.updateUser({ data: profileData });
   if (error) throw error;
   return profileData;
 }
+
 
 // ========== ARTISANS ==========
 

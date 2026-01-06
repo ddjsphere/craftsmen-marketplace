@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { signUp, signInWithProvider } from '../utils/api';
+import { completeSignUp, signInWithProvider } from '../utils/api';
 import { X } from 'lucide-react';
 
 interface SignupModalProps {
@@ -23,7 +23,7 @@ export function SignupModal({ onClose, onSuccess, onSwitchToLogin }: SignupModal
     setLoading(true);
 
     try {
-      await signUp(email, password, name, userType);
+      await completeSignUp(email, password, name, userType);
       onSuccess();
       onClose();
     } catch (err: any) {

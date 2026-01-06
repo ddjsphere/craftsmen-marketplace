@@ -20,28 +20,42 @@ export default function App() {
   const [view, setView] = useState<'marketplace' | 'dashboard'>('marketplace');
 
   useEffect(() => {
-    // Initialize sample data on first load
-    initializeData().catch(error => {
-      console.error('Error initializing data:', error);
-    });
+  // ===== TESTING Supabase Connection =====
+  console.log('Testing Supabase connection...');
+  getCurrentUser()
+    .then(user => console.log('Current user:', user))
+    .catch(error => console.error('Error fetching current user:', error));
 
-    // Check for existing session
-    checkUser();
+  initializeData()
+    .then(() => console.log('initializeData ran successfully'))
+    .catch(error => console.error('Error initializing data:', error));
+  // ======================================
 
-    // Listen for auth changes
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) {
-        checkUser();
-      } else {
-        setCurrentUser(null);
-        setView('marketplace');
-      }
-    });
+  // Check for existing session
+  checkUser();
 
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
-  }, []);
+  // Listen for auth changes
+  const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+    if (session) {
+      checkUser();
+    } else {
+      setCurrentUser(null);
+      setView('marketplace');
+    }
+  });
+
+  return () => {
+    authListener.subscription.unsubscribe();
+  };
+
+   // ===== TESTING DENO BACKEND =====
+  fetch('https://redesigned-yodel-5gx4gpqp6j76f4xqr-8001.app.github.dev/api/test')
+    .then(res => res.json())
+    .then(data => console.log('Backend response:', data))
+    .catch(err => console.error('Backend fetch error:', err));
+  // ======================================
+}, []);
+
 
   const checkUser = async () => {
     try {

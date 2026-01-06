@@ -62,7 +62,6 @@
       "scripts": {
             "dev:frontend": "vite",
             "dev:backend": "deno run --allow-env --allow-net --allow-read --no-check src/supabase/functions/server/index.tsx",
-            "dev": "concurrently \"npm:dev:backend\" \"npm:dev:frontend\"",
             "build": "vite build"
       }
 }
