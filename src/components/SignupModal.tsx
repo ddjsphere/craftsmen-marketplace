@@ -12,7 +12,6 @@ export function SignupModal({ onClose, onSuccess, onSwitchToLogin }: SignupModal
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [userType, setUserType] = useState<'buyer' | 'artisan'>('buyer');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState<string | null>(null);
@@ -23,7 +22,7 @@ export function SignupModal({ onClose, onSuccess, onSwitchToLogin }: SignupModal
     setLoading(true);
 
     try {
-      await completeSignUp(email, password, name, userType);
+      await completeSignUp(email, password, name);
       onSuccess();
       onClose();
     } catch (err: any) {
@@ -104,32 +103,6 @@ export function SignupModal({ onClose, onSuccess, onSwitchToLogin }: SignupModal
                 required
                 minLength={6}
               />
-            </div>
-
-            <div>
-              <label className="block text-sm text-gray-700 mb-2">I am a...</label>
-              <div className="flex gap-4">
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    value="buyer"
-                    checked={userType === 'buyer'}
-                    onChange={(e) => setUserType(e.target.value as 'buyer')}
-                    className="mr-2"
-                  />
-                  <span>Buyer</span>
-                </label>
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    value="artisan"
-                    checked={userType === 'artisan'}
-                    onChange={(e) => setUserType(e.target.value as 'artisan')}
-                    className="mr-2"
-                  />
-                  <span>Artisan</span>
-                </label>
-              </div>
             </div>
 
             <button
