@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { completeSignUp, signInWithProvider } from '../utils/api';
 import { X } from 'lucide-react';
 
+
 interface SignupModalProps {
   onClose: () => void;
   onSuccess: () => void;
@@ -12,6 +13,7 @@ export function SignupModal({ onClose, onSuccess, onSwitchToLogin }: SignupModal
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState<string | null>(null);
@@ -93,20 +95,28 @@ export function SignupModal({ onClose, onSuccess, onSwitchToLogin }: SignupModal
               />
             </div>
 
-           <div>
-            <label className="block text-sm text-gray-700 mb-1">Password</label>
-
-
-            <div className="relative">
-              <input                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg
-                        focus:outline-none focus:ring-2 focus:ring-orange-500"
-                required
-                minLength={6}
-              />
+            <div>
+              <label className="block text-sm text-gray-700 mb-1">Password</label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg
+                            focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  required
+                  minLength={6}
+                />
+                <button 
+                  type="button" 
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500"
+                >
+                  {showPassword ? 'Hide' : 'Show'}
+                </button>
+              </div>
             </div>
+
 
             <button
               type="submit"
