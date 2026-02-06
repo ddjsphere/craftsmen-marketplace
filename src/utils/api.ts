@@ -333,3 +333,39 @@ export function getSessionId(): string {
   }
   return sessionId;
 }
+
+// Add these to your existing utils/api.ts file
+
+export async function saveBuyerPreferences(data: any): Promise<void> {
+  const response = await fetch('/api/user/buyer-preferences', {
+    method: 'POST',
+    headers: { 
+      'Content-Type': 'application/json',
+      // Add your auth token if needed
+      // 'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify(data),
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to save buyer preferences');
+  }
+}
+
+export async function completeSellerOnboarding(data: any): Promise<void> {
+  const response = await fetch('/api/user/seller-onboarding', {
+    method: 'POST',
+    headers: { 
+      'Content-Type': 'application/json',
+      // Add your auth token if needed
+      // 'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify(data),
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to complete seller setup');
+  }
+}

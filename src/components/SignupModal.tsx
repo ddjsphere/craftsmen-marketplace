@@ -1,13 +1,17 @@
 import { useState } from 'react';
 import { completeSignUp, signInWithProvider } from '../utils/api';
 import { X } from 'lucide-react';
-
+import { RoleSelectionModal } from './RoleSelectionModal';
+import { SellerOnboardingModal, SellerData } from './SellerOnboardingModal';
+import { BuyerPreferencesModal, BuyerData } from './BuyerPreferencesModal';
 
 interface SignupModalProps {
   onClose: () => void;
   onSuccess: () => void;
   onSwitchToLogin: () => void;
 }
+
+type OnboardingStep = 'signup' | 'role-selection' | 'buyer-preferences' | 'seller-onboarding';
 
 export function SignupModal({ onClose, onSuccess, onSwitchToLogin }: SignupModalProps) {
   const [name, setName] = useState('');
@@ -17,6 +21,10 @@ export function SignupModal({ onClose, onSuccess, onSwitchToLogin }: SignupModal
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState<string | null>(null);
+  
+  // Onboarding flow state
+  const [currentStep, setCurrentStep] = useState<OnboardingStep>('signup');
+  const [selectedRole, setSelectedRole] = useState<'buyer' | 'seller' | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,8 +33,8 @@ export function SignupModal({ onClose, onSuccess, onSwitchToLogin }: SignupModal
 
     try {
       await completeSignUp(email, password, name);
-      onSuccess();
-      onClose();
+      // Instead of closing immediately, move to role selection
+      setCurrentStep('role-selection');
     } catch (err: any) {
       setError(err.message || 'Failed to create account');
     } finally {
@@ -39,8 +47,8 @@ export function SignupModal({ onClose, onSuccess, onSwitchToLogin }: SignupModal
     setOauthLoading(provider);
     try {
       await signInWithProvider(provider);
-      onSuccess();
-      onClose();
+      // Move to role selection after OAuth
+      setCurrentStep('role-selection');
     } catch (err: any) {
       setError(err.message || `Failed to sign in with ${provider}`);
     } finally {
@@ -48,6 +56,75 @@ export function SignupModal({ onClose, onSuccess, onSwitchToLogin }: SignupModal
     }
   };
 
+  const handleRoleSelection = (role: 'buyer' | 'seller') => {
+    setSelectedRole(role);
+    if (role === 'buyer') {
+      setCurrentStep('buyer-preferences');
+    } else {
+      setCurrentStep('seller-onboarding');
+    }
+  };
+
+  const handleBuyerComplete = async (data: BuyerData) => {
+    try {
+      // TODO: Send buyer preferences to your API
+      console.log('Buyer preferences:', data);
+      // You might want to call an API endpoint like:
+      // await saveBuyerPreferences(data);
+      
+      onSuccess();
+      onClose();
+    } catch (err: any) {
+      setError(err.message || 'Failed to save preferences');
+    }
+  };
+
+  const handleSellerComplete = async (data: SellerData) => {
+    try {
+      // TODO: Send seller data to your API
+      console.log('Seller data:', data);
+      // You might want to call an API endpoint like:
+      // await completeSellerOnboarding(data);
+      
+      onSuccess();
+      onClose();
+    } catch (err: any) {
+      setError(err.message || 'Failed to complete seller setup');
+    }
+  };
+
+  // Render the appropriate modal based on current step
+  if (currentStep === 'role-selection') {
+    return (
+      <RoleSelectionModal
+        onClose={onClose}
+        onSelectRole={handleRoleSelection}
+        userName={name}
+      />
+    );
+  }
+
+  if (currentStep === 'buyer-preferences') {
+    return (
+      <BuyerPreferencesModal
+        onClose={onClose}
+        onComplete={handleBuyerComplete}
+        onBack={() => setCurrentStep('role-selection')}
+      />
+    );
+  }
+
+  if (currentStep === 'seller-onboarding') {
+    return (
+      <SellerOnboardingModal
+        onClose={onClose}
+        onComplete={handleSellerComplete}
+        onBack={() => setCurrentStep('role-selection')}
+      />
+    );
+  }
+
+  // Default: Show initial signup form
   return (
     <div
       className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
@@ -116,7 +193,6 @@ export function SignupModal({ onClose, onSuccess, onSwitchToLogin }: SignupModal
                 </button>
               </div>
             </div>
-
 
             <button
               type="submit"
