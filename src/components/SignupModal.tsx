@@ -17,6 +17,7 @@ export function SignupModal({ onClose, onSuccess, onSwitchToLogin }: SignupModal
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState<string | null>(null);
@@ -24,22 +25,29 @@ export function SignupModal({ onClose, onSuccess, onSwitchToLogin }: SignupModal
   // Onboarding flow state
   const [currentStep, setCurrentStep] = useState<OnboardingStep>('signup');
   const [selectedRole, setSelectedRole] = useState<'buyer' | 'seller' | null>(null);
-
+  
+  //Submit button handling
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
+  e.preventDefault();
+  setError('');
 
-    try {
-      await completeSignUp(email, password, name);
-      // Instead of closing immediately, move to role selection
-      setCurrentStep('role-selection');
-    } catch (err: any) {
-      setError(err.message || 'Failed to create account');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // 3️⃣ Client-side password match check
+  if (password !== confirmPassword) {
+    setError("Passwords don't match");
+    return;
+  }
+
+  setLoading(true);
+  try {
+    await completeSignUp(email, password, name);
+    setCurrentStep('role-selection');
+  } catch (err: any) {
+    setError(err.message || 'Failed to create account');
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const handleOAuth = async (provider: 'google' | 'facebook') => {
     setError('');
@@ -130,7 +138,7 @@ export function SignupModal({ onClose, onSuccess, onSwitchToLogin }: SignupModal
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-lg max-w-md w-full p-8"
+        className="bg-white rounded-lg max-w-md w-full p-8 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-6">
@@ -144,8 +152,7 @@ export function SignupModal({ onClose, onSuccess, onSwitchToLogin }: SignupModal
 
         <div className="space-y-4">
           <div className="flex items-center gap-3 my-2">
-            <span className="flex-1 h-px bg-gray-200" />
-            <span className="text-sm text-gray-600 hover:text-gray-800">or</span>
+            <span className="flex-1 h-px bg-gray-200" /> 
             <span className="flex-1 h-px bg-gray-200" />
           </div>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -183,6 +190,21 @@ export function SignupModal({ onClose, onSuccess, onSwitchToLogin }: SignupModal
                   required
                   minLength={6}
                 /> 
+              </div>
+            </div>
+
+            {/* 2️⃣ Confirm Password Field */}
+            <div>
+              <label className="block text-sm text-gray-700 mb-1">Confirm Password</label>
+              <div className="relative flex items-center">
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full px-4 py-2 pr-16 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  required
+                  minLength={6}
+                />
               </div>
             </div>
 
