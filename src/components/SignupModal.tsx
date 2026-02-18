@@ -4,6 +4,8 @@ import { X } from 'lucide-react';
 import { RoleSelectionModal } from './RoleSelectionModal';
 import { SellerOnboardingModal, SellerData } from './SellerOnboardingModal';
 import { BuyerPreferencesModal, BuyerData } from './BuyerPreferencesModal';
+import { Eye, EyeOff } from 'lucide-react';
+
 
 interface SignupModalProps {
   onClose: () => void;
@@ -18,10 +20,12 @@ export function SignupModal({ onClose, onSuccess, onSwitchToLogin }: SignupModal
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState<string | null>(null);
-  
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+ 
   // Onboarding flow state
   const [currentStep, setCurrentStep] = useState<OnboardingStep>('signup');
   const [selectedRole, setSelectedRole] = useState<'buyer' | 'seller' | null>(null);
@@ -177,36 +181,64 @@ export function SignupModal({ onClose, onSuccess, onSwitchToLogin }: SignupModal
                 required
               />
             </div>
-
             <div>
               <label className="block text-sm text-gray-700 mb-1">Password</label>
-              <div className="relative flex items-center">
+              <div className="relative">
                 <input
-                  type={"password"}
+                  type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-2 pr-16 border border-gray-300 rounded-lg
+                  className="w-full px-4 py-2 pr-12 border border-gray-300 rounded-lg
                             focus:outline-none focus:ring-2 focus:ring-orange-500"
                   required
                   minLength={6}
-                /> 
+                  autoComplete="new-password"
+                  name="password"
+                  data-lpignore="true"
+                  data-1p-ignore
+                />
+
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2
+                            text-gray-500 hover:text-gray-700"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
               </div>
             </div>
 
-            {/* 2️⃣ Confirm Password Field */}
+
             <div>
               <label className="block text-sm text-gray-700 mb-1">Confirm Password</label>
-              <div className="relative flex items-center">
+              <div className="relative">
                 <input
-                  type="password"
+                  type={showConfirmPassword ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full px-4 py-2 pr-16 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full px-4 py-2 pr-12 border border-gray-300 rounded-lg
+                            focus:outline-none focus:ring-2 focus:ring-orange-500"
                   required
                   minLength={6}
+                  autoComplete="new-password"
+                  name="password"
+                  data-lpignore="true"
+                  data-1p-ignore
                 />
+
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2
+                            text-gray-500 hover:text-gray-700"
+                >
+                  {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
               </div>
             </div>
+
+
 
             <button
               type="submit"
