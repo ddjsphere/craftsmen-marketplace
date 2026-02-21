@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { createArtisan, updateArtisan } from '../utils/api';
+import { createArtisan, updateArtisan } from '../../utils/api';
 import { Save } from 'lucide-react';
 
 interface ArtisanProfileManagerProps {

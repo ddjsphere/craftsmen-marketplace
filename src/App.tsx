@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Hero } from './components/Hero';
+import { Hero } from './components/shared/Hero';
 import { FeaturedArtisans } from './components/FeaturedArtisans';
 import { ArtworkGallery } from './components/ArtworkGallery';
-import { Navigation } from './components/Navigation';
-import { Footer } from './components/Footer';
-import { LoginModal } from './components/LoginModal';
-import { SignupModal } from './components/SignupModal';
+import { Navigation } from './components/shared/Navigation';
+import { Footer } from './components/shared/Footer';
+import { LoginModal } from './pages/auth/LoginModal';
+import { SignupModal } from './components/modals/SignupModal';
 import { CartModal } from './components/CartModal';
-import { ArtisanDashboard } from './components/ArtisanDashboard';
+import { ArtisanDashboard } from './pages/seller/ArtisanDashboard';
 import { initializeData, getCurrentUser, supabase } from './utils/api';
 
 export default function App() {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { getArtworks, getArtisan, getArtisanOrders, getCurrentUser } from '../utils/api';
-import { ArtworkManager } from './ArtworkManager';
+import { getArtworks, getArtisan, getArtisanOrders, getCurrentUser } from '../../utils/api';
+import { ArtworkManager } from '../../components/ArtworkManager';
 import { ArtisanProfileManager } from './ArtisanProfileManager';
 import { Package, Palette, User, BarChart } from 'lucide-react';
 

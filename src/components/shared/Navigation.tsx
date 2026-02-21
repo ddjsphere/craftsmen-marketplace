@@ -1,6 +1,6 @@
 import { Search, ShoppingBag, Menu, User, LogOut, LayoutDashboard } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { signOut } from '../utils/api';
+import { signOut } from '../../utils/api';
 
 interface NavigationProps {
   cartCount?: number;

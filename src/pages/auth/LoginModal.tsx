@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { signIn, signInWithProvider } from '../utils/api';
+import { signIn, signInWithProvider } from '../../utils/api';
 import { X } from 'lucide-react';
 
 interface LoginModalProps {

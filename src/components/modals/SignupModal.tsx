@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { completeSignUp, signInWithProvider } from '../utils/api';
+import { completeSignUp, signInWithProvider } from '../../utils/api';
 import { X } from 'lucide-react';
-import { RoleSelectionModal } from './RoleSelectionModal';
-import { SellerOnboardingModal, SellerData } from './SellerOnboardingModal';
+import { RoleSelectionModal } from '../modals/RoleSelectionModal';
+import { SellerOnboardingModal, SellerData } from '../modals/SellerOnboardingModal';
 import { BuyerPreferencesModal, BuyerData } from './BuyerPreferencesModal';
 import { Eye, EyeOff } from 'lucide-react';
 
@@ -90,7 +90,7 @@ export function SignupModal({ onClose, onSuccess, onSwitchToLogin }: SignupModal
     }
   };
 
-  const handleSellerComplete = async (data: SellerData) => {
+  const handleSellerComplete = async (data: any) => {
     try {
       // TODO: Send seller data to your API
       console.log('Seller data:', data);

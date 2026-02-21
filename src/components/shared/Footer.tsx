@@ -1,6 +1,6 @@
 import { Facebook, Instagram, Twitter, Mail } from 'lucide-react';
 import { useState } from 'react';
-import { subscribe } from '../utils/api';
+import { subscribe } from '../../utils/api';
 
 export function Footer() {
   // inline Newsletter component to keep file small
