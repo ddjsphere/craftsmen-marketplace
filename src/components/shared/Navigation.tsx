@@ -9,6 +9,7 @@ interface NavigationProps {
   onCartClick: () => void;
   onDashboardClick: () => void;
   onLogout: () => void;
+  onAdminClick?: () => void;
 }
 
 export function Navigation({ 
@@ -17,7 +18,8 @@ export function Navigation({
   onLoginClick, 
   onCartClick,
   onDashboardClick,
-  onLogout
+  onLogout,
+  onAdminClick
 }: NavigationProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -158,6 +160,19 @@ export function Navigation({
               )}
             </button>
 
+            {/* Prominent Admin button (desktop) - placed in the right controls so it's easy to find */}
+            {onAdminClick && (
+              <button
+                onClick={onAdminClick}
+                className="hidden md:inline-flex items-center gap-2 px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+                className="inline-flex items-center gap-2 px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition text-sm"
+                title="Open Admin Dashboard"
+              >
+                <LayoutDashboard size={16} />
+                <span className="text-sm">Admin</span>
+              </button>
+            )}
+
             {currentUser ? (
               <div className="relative">
                 <button
@@ -197,12 +212,25 @@ export function Navigation({
                 )}
               </div>
             ) : (
-              <button
-                onClick={onLoginClick}
-                className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition hidden md:block"
-              >
-                Sign In
-              </button>
+              <div className="flex items-center gap-2">
+                {/* Admin quick-access next to Sign In (optional). Placed before Sign In so it's visible on narrow headers. */}
+                {onAdminClick && (
+                  <button
+                    onClick={onAdminClick}
+                    className="px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+                    aria-label="Open admin dashboard"
+                  >
+                    Admin
+                  </button>
+                )}
+
+                <button
+                  onClick={onLoginClick}
+                  className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition hidden md:block"
+                >
+                  Sign In
+                </button>
+              </div>
             )}
 
             <button 
@@ -243,12 +271,25 @@ export function Navigation({
               Contact
             </a>
             {!currentUser && (
-              <button
-                onClick={onLoginClick}
-                className="w-full text-left py-2 text-orange-600"
-              >
-                Sign In
-              </button>
+              <>
+                <button
+                  onClick={onLoginClick}
+                  className="w-full text-left py-2 text-orange-600"
+                >
+                  Sign In
+                </button>
+                {onAdminClick && (
+                  <button
+                    onClick={() => {
+                      onAdminClick();
+                      setIsMenuOpen(false);
+                    }}
+                    className="w-full text-left py-2 text-indigo-600"
+                  >
+                    Admin
+                  </button>
+                )}
+              </>
             )}
             {currentUser && currentUser.userType === 'artisan' && (
               <button

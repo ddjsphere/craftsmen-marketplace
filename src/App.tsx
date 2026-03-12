@@ -9,6 +9,8 @@ import { SignupModal } from './components/modals/SignupModal';
 import { CartModal } from './components/CartModal';
 import { ArtisanDashboard } from './pages/seller/ArtisanDashboard';
 import { initializeData, getCurrentUser, supabase } from './utils/api';
+import AdminDashboard from './pages/admin/AdminDashboard';
+
 
 export default function App() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -18,7 +20,8 @@ export default function App() {
   const [showCart, setShowCart] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [view, setView] = useState<'marketplace' | 'dashboard'>('marketplace');
-
+  const [userType, setUserType] = useState<'buyer' | 'artisan' | 'admin'>('buyer');
+ 
   useEffect(() => {
   // ===== TESTING Supabase Connection =====
   console.log('Testing Supabase connection...');
@@ -57,15 +60,20 @@ export default function App() {
 }, []);
 
 
-  const checkUser = async () => {
-    try {
-      const user = await getCurrentUser();
-      setCurrentUser(user);
-    } catch (error) {
-      console.error('Error checking user:', error);
-      setCurrentUser(null);
-    }
-  };
+const checkUser = async () => {
+  try {
+    const user = await getCurrentUser();
+    setCurrentUser(user);
+
+    // Fetch userType from metadata or your profile table
+    const profileData = await supabase.from('profiles').select('role').eq('id', user.id).single();
+    setUserType(profileData.data.role); // e.g., 'admin', 'artisan', 'buyer'
+  } catch (error) {
+    console.error('Error checking user:', error);
+    setCurrentUser(null);
+    setUserType(null);
+  }
+};
 
   const handleLoginSuccess = () => {
     checkUser();
@@ -77,6 +85,11 @@ export default function App() {
   };
 
   const handleOpenDashboard = () => {
+    // Preserve existing behavior but allow explicit opening of the dashboard.
+    // When used from the new admin button, we force the userType to 'admin'
+    // so the AdminDashboard component is rendered even if there's no current
+    // authenticated admin session (useful for development/testing).
+    setUserType('admin');
     setView('dashboard');
   };
 
@@ -85,22 +98,41 @@ export default function App() {
   };
 
   if (view === 'dashboard') {
-    return <ArtisanDashboard onBack={handleBackToMarketplace} />;
+    if (userType === 'artisan') {
+      return <ArtisanDashboard onBack={handleBackToMarketplace} />;
   }
+
+  if (userType === 'admin') {
+    return <AdminDashboard onBack={handleBackToMarketplace} />;
+  }
+  // Add buyer dashboard if needed
+  return null; // fallback
+}
 
   return (
     <div className="min-h-screen bg-white">
-      <Navigation 
+      <Navigation
         cartCount={cartCount}
         currentUser={currentUser}
         onLoginClick={() => setShowLogin(true)}
         onCartClick={() => setShowCart(true)}
-        onDashboardClick={handleOpenDashboard}
-        onLogout={() => {
-          setCurrentUser(null);
-          setView('marketplace');
+        onDashboardClick={() => {
+        if (currentUser && userType !== 'buyer') {
+          setView('dashboard');
+        }
+      }}
+        onAdminClick={() => {
+          // Quick access to Admin Dashboard from the header
+          setUserType('admin');
+          setView('dashboard');
         }}
-      />
+      onLogout={() => {
+        setCurrentUser(null);
+        setUserType(null);
+        setView('marketplace');
+      }}
+     /> 
+
       <Hero />
       <FeaturedArtisans />
       <ArtworkGallery 
